@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "./firebase";
 import axios from "axios";
-import { CoinList } from "./config/api";
+import { CoinList, ExchangeLists, IndexLists, NFTsList } from "./config/api";
 import { onSnapshot, doc } from "firebase/firestore";
 
 const Crypto = createContext();
@@ -17,17 +17,26 @@ const CryptoContext = ({ children }) => {
   });
   const [user, setUser] = useState(null);
   const [coins, setCoins] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [watchlist, setWatchlist] = useState([]);
 
+  const [nfts, setnfts] = useState([]);
+  const [Indexes, setIndexes] = useState([]);
+  const [Exchanges, setExchanges] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+  const [Coinwatchlist, setCoinWatchlist] = useState([]);
+  const [Nftwatchlist, setNftWatchlist] = useState([]);
   useEffect(() => {
     if (user) {
       const coinRef = doc(db, "watchlist", user?.uid);
       var unsubscribe = onSnapshot(coinRef, (coin) => {
         if (coin.exists()) {
-          console.log(coin.data().coins);
-          setWatchlist(coin.data().coins);
-        } else {
+          setCoinWatchlist(coin.data().coins);
+          setNftWatchlist(coin.data().nft);
+        }
+        //  else if(nft.exists()){
+        //   console.log(nft)
+        //  }
+        else {
           console.log("No Items in Watchlist");
         }
       });
@@ -48,17 +57,34 @@ const CryptoContext = ({ children }) => {
   const fetchCoins = async () => {
     setLoading(true);
     const { data } = await axios.get(CoinList(currency));
-     setCoins(data);
- 
+    setCoins(data);
     setLoading(false);
   };
-
+  const fetchNfts = async () => {
+    setLoading(true);
+    const { data } = await axios.get(NFTsList());
+    setnfts(data);
+    setLoading(false);
+  };
+  const fetchIndex = async () => {
+    setLoading(true);
+    const { data } = await axios.get(IndexLists());
+    setIndexes(data);
+    setLoading(false);
+  };
+  const fetchExchange = async () => {
+    setLoading(true);
+    const { data } = await axios.get(ExchangeLists());
+    setExchanges(data);
+    setLoading(false);
+  };
   useEffect(() => {
-    // if (currency === "USD") setSymbol("$");
-    // else if (currency === "USD") setSymbol("$");
- 
+    if (currency === "USD") setSymbol("$");
+    else if (currency === "INR") setSymbol("IRR");
+    fetchNfts();
     fetchCoins();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchIndex();
+    fetchExchange();
   }, [currency]);
 
   return (
@@ -70,9 +96,13 @@ const CryptoContext = ({ children }) => {
         alert,
         setAlert,
         user,
+        nfts,
+        Indexes,
         coins,
         loading,
-        watchlist,
+        Exchanges,
+        Coinwatchlist,
+        Nftwatchlist,
       }}
     >
       {children}

@@ -8,6 +8,7 @@ import { auth, db } from "../../firebase";
 import { numberWithCommas } from "../CoinsTable";
 import { AiFillDelete } from "react-icons/ai";
 import { doc, setDoc } from "firebase/firestore";
+import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles({
   container: {
@@ -66,14 +67,15 @@ const useStyles = makeStyles({
 });
 
 export default function UserSidebar() {
+  const history = useHistory();
+
   const classes = useStyles();
   const [state, setState] = React.useState({
     right: false,
   });
-  const { user, setAlert, watchlist, coins, symbol } = CryptoState();
-
-  console.log(watchlist, coins);
-
+  const { user, setAlert, Coinwatchlist,Nftwatchlist,nfts, coins, symbol } = CryptoState();
+     
+ console.log(coins)
   const toggleDrawer = (anchor, open) => (event) => {
     if (
       event.type === "keydown" &&
@@ -96,18 +98,19 @@ export default function UserSidebar() {
     toggleDrawer();
   };
 
-  const removeFromWatchlist = async (coin) => {
+  const removeFromcoinWatchlist = async (coin) => {
     const coinRef = doc(db, "watchlist", user.uid);
     try {
       await setDoc(
         coinRef,
-        { coins: watchlist.filter((wish) => wish !== coin?.id) },
+        { coins: Coinwatchlist.filter((wish) => wish !== coin?.id) },
+        
         { merge: true }
       );
 
       setAlert({
         open: true,
-        message: `${coin.name} Removed from the Watchlist !`,
+        message: ` Removed from the Watchlist !`,
         type: "success",
       });
     } catch (error) {
@@ -118,7 +121,28 @@ export default function UserSidebar() {
       });
     }
   };
+  const removeFromnftWatchlist = async (nft) => {
+    const coinRef = doc(db, "watchlist", user.uid);
+    try {
+      await setDoc(
+        coinRef,
+        { nft: Nftwatchlist.filter((wish) => wish !== nft?.id) },
+        { merge: true }
+      );
 
+      setAlert({
+        open: true,
+        message: ` Removed from the Watchlist !`,
+        type: "success",
+      });
+    } catch (error) {
+      setAlert({
+        open: true,
+        message: error.message,
+        type: "error",
+      });
+    }
+  };
   return (
     <div>
       {["right"].map((anchor) => (
@@ -162,10 +186,15 @@ export default function UserSidebar() {
                   <span style={{ fontSize: 15, textShadow: "0 0 5px black" }}>
                     Watchlist
                   </span>
+                  <span style={{ fontSize: 15, textShadow: "0 0 5px black" }}>
+                    coins
+                  </span>
                   {coins.map((coin) => {
-                    if (watchlist.includes(coin.id))
+                    if (Coinwatchlist.includes(coin.id))
                       return (
-                        <div className={classes.coin}>
+                        <div className={classes.coin}    onClick={() => history.push(`/coins/${coin.id}`)}>
+                          <img style={{width:'40px',height:'40px'}} src={coin.image}></img>
+                           
                           <span>{coin.name}</span>
                           <span style={{ display: "flex", gap: 8 }}>
                             {symbol}{" "}
@@ -173,12 +202,43 @@ export default function UserSidebar() {
                             <AiFillDelete
                               style={{ cursor: "pointer" }}
                               fontSize="16"
-                              onClick={() => removeFromWatchlist(coin)}
+                              onClick={() => removeFromcoinWatchlist(coin)}
                             />
                           </span>
                         </div>
                       );
                     else return <></>;
+                  })}
+                     <span style={{ fontSize: 15, textShadow: "0 0 5px black" }}>
+                    nfts
+                  </span>
+                  {nfts.map((nfts) => {
+                    if(nfts==undefined){
+                       return (
+                         <></>
+                      );
+                    
+                    }else{
+                      if (Nftwatchlist.includes(nfts.id))
+                      return (
+                        <div className={classes.coin} onClick={() => history.push(`/nfts/${nfts.id}`)}>
+                          <span>{nfts.symbol}</span>
+                          <span>{nfts.name}</span>
+                           
+                          <span style={{ display: "flex", gap: 8 }}>
+                           {" "}
+                            { nfts.market_cap}
+                            <AiFillDelete
+                              style={{ cursor: "pointer" }}
+                              fontSize="16"
+                              onClick={() => removeFromnftWatchlist(nfts)}
+                            />
+                          </span>
+                        </div>
+                      );
+                    else return <></>;
+                    }
+                 
                   })}
                 </div>
               </div>
